@@ -180,6 +180,8 @@ namespace SP5_TRPG
             else
                 Console.WriteLine($"체력 : {player.Health}");
             Console.WriteLine($"Gold : {player.Gold} G");
+            Console.WriteLine($"경험치 : {player.nowExp}  /  {player.reqExp}");
+
 
             Console.WriteLine("\n0. 나가기\n");
             if(GetNumber(0,0) == 0)
@@ -575,7 +577,8 @@ namespace SP5_TRPG
         public bool isDead { get; set; }
         public List<Item> equips { get; set; }
         public List<Item> items { get; set; }
-
+        public int reqExp = 1;
+        public int nowExp = 0;
         public Player(string name, Job playerJob)
         {
             Name = name;
@@ -725,6 +728,23 @@ namespace SP5_TRPG
             }
             return res;
         }
+        // 던전 클리어, 경험치 획득
+        public void ClearDungeon()
+        {
+            nowExp++;
+            if (nowExp == reqExp)
+                LevelUp();
+        }
+        private void LevelUp()
+        {
+            Level++;
+            reqExp++;
+            nowExp = 0;
+            // 스텟 상승 , 방어 1상승, 공격력은 2레벨마다
+            Defense++;
+            if (Level % 2 != 0)
+                Attack++;
+        }
     }
     class Item
     {
@@ -762,7 +782,7 @@ namespace SP5_TRPG
                 // 40퍼센트로 실패
                 if (fail <= 4)
                 {
-                    player.Health /= 2;
+                    player.TakeDamage(player.Health/2);
                     return false;
                 }
             }
@@ -772,11 +792,14 @@ namespace SP5_TRPG
             lost = lost - (player.Defense - reqDefense);
             lost = Math.Max(lost, 0); // 0 미만 방지
                 
-            player.Health -= lost;
+            player.TakeDamage(lost);
             // 공격력에 따른 보상 증가
             int bonus = random.Next(player.Attack, player.Attack * 2 + 1);
             int gold = reward + (int)(reward * bonus / 100.0);
             player.Gold += gold;
+
+            // 클리어
+            player.ClearDungeon();
             return true;
             
         }
