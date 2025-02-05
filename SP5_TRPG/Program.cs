@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using static System.Collections.Specialized.BitVector32;
+
 
 namespace SP5_TRPG
 {
@@ -56,7 +51,6 @@ namespace SP5_TRPG
             player = new Player(userName, userJob);
             #endregion
 
-
             // 게임 씬
             while (true)
             {
@@ -92,7 +86,6 @@ namespace SP5_TRPG
         static void ClearLine()
         {
             // 한줄 지우기
-            int left = Console.CursorLeft;
             int top = Console.CursorTop;
             Console.SetCursorPosition(0, top);
             Console.Write(new string(' ', Console.BufferWidth));
@@ -119,8 +112,6 @@ namespace SP5_TRPG
                 }                
                 else
                 {
-                    int left = Console.CursorLeft;
-                    int top = Console.CursorTop;
                     // 한줄 지우기
                     ClearLine();
                     Console.Write("잘못 된 입력입니다.");
@@ -141,8 +132,6 @@ namespace SP5_TRPG
                 }
                 else
                 {
-                    int left = Console.CursorLeft;
-                    int top = Console.CursorTop;
                     // 한줄 지우기
                     ClearLine();
                     Console.Write("잘못 된 입력입니다.");
@@ -533,275 +522,6 @@ namespace SP5_TRPG
                 }
                 Console.Write("\n");
             }
-        }
-    }
-    enum Job
-    {
-        [Description("전사")]
-        Warrior = 1,
-        [Description("도적")]
-        Thief
-    }
-    enum ItemStatus
-    {
-        [Description("공격력")]
-        Attack,
-
-        [Description("체력")]
-        Health,
-
-        [Description("방어력")]
-        Defense
-    }
-    interface ICharacter
-    {
-        string Name { get; set; }
-        int Level { get; set; }
-        int Health { get; set; }
-        int Attack { get; set; }
-        int Defense { get; set; }
-        bool isDead { get; set; }
-        int Gold { get; set; }
-        bool TakeDamage(int damage);
-    }
-    class Player : ICharacter
-    {
-        public string Name { get; set; }
-        public Job job { get; set; }
-        public int Level { get; set; }
-        public int Attack { get; set; }
-        public int Defense { get; set; }
-        public int MaxHealth { get; set; }
-        public int Health { get; set; }
-        public int Gold { get; set; }
-        public bool isDead { get; set; }
-        public List<Item> equips { get; set; }
-        public List<Item> items { get; set; }
-        public int reqExp = 1;
-        public int nowExp = 0;
-        public Player(string name, Job playerJob)
-        {
-            Name = name;
-            job = playerJob;
-            Level = 1;
-            switch (playerJob)
-            {
-                case Job.Warrior:
-                    Attack = 10;
-                    Defense = 5;
-                    Health = 100;
-                    MaxHealth = Health;
-                    Gold = 1500;
-                    break;
-                case Job.Thief:
-                    Attack = 13;
-                    Defense = 3;
-                    Health = 90;
-                    MaxHealth = Health;
-                    Gold = 2500;
-                    break;
-            }
-            items = new List<Item>();
-            equips = new List<Item>();
-        }
-
-        public bool TakeDamage(int damage)
-        {
-            if (isDead) return false;
-            if (damage <= 0) return false;
-            else
-            {
-                Health -= damage;
-                if (Health <= 0)
-                    isDead = true;
-                return true;
-            }
-        }
-
-        public void TryAttack(ICharacter target)
-        {
-            target.TakeDamage(Attack);
-        }
-        public void Equip(Item item)
-        {
-            // 장착하고 있는 장비라면 장비목록에서 삭제
-            var sameNameItem = equips.FirstOrDefault(equipItem => equipItem.Name == item.Name);
-            if (sameNameItem != null)
-            {
-                Disarm(sameNameItem);
-                return;
-            }
-
-            // 장착하고 있는 부위라면 장비 해제
-            var sameTypeItem = equips.FirstOrDefault(equipItem => equipItem.Status == item.Status);
-            if (sameTypeItem != null)
-            {
-                Disarm(sameTypeItem);
-            }
-
-            // 장착 장비 목록에 추가 - 장착
-            equips.Add(item);
-            // 스텟 변경
-            switch (item.Status)
-            {
-                case ItemStatus.Attack:
-                    Attack += item.Value;
-                    break;
-                case ItemStatus.Defense:
-                    Defense += item.Value;
-                    break;
-                case ItemStatus.Health:
-                    MaxHealth += item.Value;
-                    Health = Math.Min(MaxHealth, Health);
-                    break;
-            }
-        }
-        public void Disarm(Item item)
-        {
-            equips.Remove(item);
-            // 해제 - 스텟 변경
-            switch (item.Status)
-            {
-                case ItemStatus.Attack:
-                    Attack -= item.Value;
-                    break;
-                case ItemStatus.Defense:
-                    Defense -= item.Value;
-                    break;
-                case ItemStatus.Health:
-                    Health -= item.Value;
-                    break;
-            }
-        }
-        // 아이템 구입
-        public int Exchange(int gold, Item item)
-        {
-            // 소지금 보다 많으면 실패
-            if (gold > Gold) return -1;
-            else if (items.Any(myItem => myItem.Name == item.Name))
-            {
-                // 이미 가지고 있는 아이템이라면 실패
-                return -2;
-            }
-            else
-            {
-                // 교환성공
-                Gold -= gold;
-                items.Add(item);
-                return 0;
-            }
-        }
-        // 아이템 판매
-        public int Sale(Item item)
-        {
-            // 교환성공
-            if (equips.Contains(item))
-            {
-                // 장비 해제
-                Disarm(item);
-            }
-            items.Remove(item);
-            int sale = item.Gold * 85 / 100;
-            Gold += sale;
-            return 0;
-        }
-        public int Rest(int gold, int maxHeal)
-        {
-            // 소지금 보다 많으면 실패
-            if (gold > Gold) return -1;
-            else
-            {
-                // 회복 성공
-                Gold -= gold;
-                int health = Health + maxHeal;
-                Health = Math.Min(MaxHealth, health);
-                return 0;
-            }
-        }
-        public int GetEquipStatus(ItemStatus itemStatus)
-        { 
-            int res = 0;
-            for (int i = 0; i < equips.Count; i++)
-            {
-                if (equips[i].Status == itemStatus)
-                    res+= equips[i].Value;
-            }
-            return res;
-        }
-        // 던전 클리어, 경험치 획득
-        public void ClearDungeon()
-        {
-            nowExp++;
-            if (nowExp == reqExp)
-                LevelUp();
-        }
-        private void LevelUp()
-        {
-            Level++;
-            reqExp++;
-            nowExp = 0;
-            // 스텟 상승 , 방어 1상승, 공격력은 2레벨마다
-            Defense++;
-            if (Level % 2 != 0)
-                Attack++;
-        }
-    }
-    class Item
-    {
-        public string Name { get; set; }
-        public ItemStatus Status { get; set; }
-        public int Value { get; set; }
-        public int Gold { get; set; }
-        public string Descript { get; set; }
-        public Item(string name, ItemStatus status, int value, int gold, string descript)
-        {
-            Name = name;
-            Status = status;
-            Value = value;
-            Gold = gold;
-            Descript = descript;
-        }
-    }
-    class Dungeon
-    { 
-        public string name { get; set; }
-        public int reqDefense { get; set; }
-        public int reward { get; set; }
-        public Dungeon(string name, int reqDefense, int reward) 
-        {
-            this.name = name;
-            this.reqDefense = reqDefense;
-            this.reward = reward;
-        }
-        public bool EnterDungeon(Player player)
-        {
-            Random random = new Random();
-            if (reqDefense > player.Defense ) 
-            {
-                int fail = random.Next(11); // 1 ~ 10
-                // 40퍼센트로 실패
-                if (fail <= 4)
-                {
-                    player.TakeDamage(player.Health/2);
-                    return false;
-                }
-            }
-            // 성공
-            // 방어도에 따른 체력 감소
-            int lost = random.Next(20, 36); // 20 ~ 35
-            lost = lost - (player.Defense - reqDefense);
-            lost = Math.Max(lost, 0); // 0 미만 방지
-                
-            player.TakeDamage(lost);
-            // 공격력에 따른 보상 증가
-            int bonus = random.Next(player.Attack, player.Attack * 2 + 1);
-            int gold = reward + (int)(reward * bonus / 100.0);
-            player.Gold += gold;
-
-            // 클리어
-            player.ClearDungeon();
-            return true;
-            
         }
     }
 }
