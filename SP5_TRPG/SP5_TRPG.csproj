@@ -43,6 +43,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="class\Dungeon.cs" />
+    <Compile Include="class\Item.cs" />
+    <Compile Include="class\Player.cs" />
+    <Compile Include="Enums\ItemStatus.cs" />
+    <Compile Include="Enums\Job.cs" />
+    <Compile Include="interface\ICharacter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
